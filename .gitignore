@@ -1,0 +1,10 @@
+# Real archive data (contains personal information) — never commit.
+example/
+
+# Internal planning document (Japanese) — not part of the repository.
+PLAN.md
+
+# Default output directory.
+posts/
+
+.DS_Store
