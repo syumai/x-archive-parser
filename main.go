@@ -21,7 +21,7 @@ func main() {
 
 func run() int {
 	var (
-		outDir = flag.String("o", "./posts", "output directory")
+		outDir = flag.String("o", "./x-posts", "output directory")
 		tz     = flag.String("tz", "", "IANA timezone name (e.g. Asia/Tokyo, UTC) used for month boundaries and displayed times; defaults to the system local timezone")
 	)
 	flag.Usage = func() {

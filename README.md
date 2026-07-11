@@ -27,7 +27,7 @@ x-archive-parser [flags] [archive]
   the archive argument.
 
 Flags:
-  -o string         output directory (default "./posts")
+  -o string         output directory (default "./x-posts")
   -tz string        IANA timezone name (e.g. Asia/Tokyo, UTC) used for month
                      boundaries and displayed times; defaults to the system
                      local timezone
@@ -36,7 +36,7 @@ Flags:
 Examples:
 
 ```sh
-# Simplest: run inside an extracted archive directory; writes to ./posts.
+# Simplest: run inside an extracted archive directory; writes to ./x-posts.
 x-archive-parser
 
 # From the zip file downloaded from X.
@@ -54,7 +54,7 @@ won't clobber an unrelated directory by mistake.
 ### Output layout
 
 ```
-posts/
+x-posts/
 ├── index.md                # entry point: account info, date range, per-month table
 ├── 2020/
 │   ├── 2020-01.md
@@ -127,7 +127,7 @@ read those months' Markdown files for surrounding context.
 
 Example prompt:
 
-> Look at `./posts/index.md` to understand the archive layout, then
+> Look at `./x-posts/index.md` to understand the archive layout, then
 > summarize what I posted about WebAssembly between March and April 2023,
 > including reposts. Use the JSONL files to search and the Markdown files
 > to read context around any hits.
@@ -136,7 +136,7 @@ Example `grep` an agent might run to find candidate months before reading
 the Markdown:
 
 ```sh
-grep -il wasm posts/*/[0-9]*.jsonl
+grep -il wasm x-posts/*/[0-9]*.jsonl
 ```
 
 ## Notes and limitations

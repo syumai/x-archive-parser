@@ -5,6 +5,6 @@ example/
 PLAN.md
 
 # Default output directory.
-posts/
+x-posts/
 
 .DS_Store
