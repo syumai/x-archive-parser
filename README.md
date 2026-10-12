@@ -1,5 +1,8 @@
 # x-archive-parser
 
+[![CI](https://github.com/syumai/x-archive-parser/actions/workflows/ci.yml/badge.svg)](https://github.com/syumai/x-archive-parser/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/syumai/x-archive-parser.svg)](https://pkg.go.dev/github.com/syumai/x-archive-parser)
+
 `x-archive-parser` expands an X (formerly Twitter) archive into per-month
 files that coding agents can investigate.
 
@@ -158,6 +161,21 @@ grep -il wasm x-posts/*/[0-9]*.jsonl
   an agent doesn't need to guess.
 - **Offline**: this tool never makes network requests; it only reads the
   archive on disk.
+
+## Privacy
+
+An X archive contains personal data (email address, DMs, and so on). This
+tool only reads the archive and writes posts, with account username and
+display name, to the output directory; nothing is sent over the network.
+Treat the output directory as private, and be careful before committing it
+or sharing it with an external service.
+
+## Development
+
+```sh
+go vet ./...
+go test ./...
+```
 
 ## Acknowledgements
 
