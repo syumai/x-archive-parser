@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"time"
 
@@ -65,6 +66,9 @@ type monthSummary struct {
 // and is idempotent.
 func Write(dir string, meta Meta, posts []*post.Post) (*Summary, error) {
 	if err := checkOutputDir(dir); err != nil {
+		return nil, err
+	}
+	if err := removePreviousOutput(dir); err != nil {
 		return nil, err
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -137,6 +141,45 @@ func checkOutputDir(dir string) error {
 		}
 	}
 	return fmt.Errorf("output directory %q is non-empty and does not contain index.md; refusing to write into a directory that was not produced by this tool", dir)
+}
+
+var (
+	yearDirRe   = regexp.MustCompile(`^\d{4}$`)
+	monthFileRe = regexp.MustCompile(`^\d{4}-\d{2}\.(md|jsonl)$`)
+)
+
+// removePreviousOutput deletes the files a previous run produced (index.md
+// and YYYY/YYYY-MM.{md,jsonl}), so that months that no longer exist, e.g.
+// after changing -tz, do not linger. Anything else in dir is left alone.
+// checkOutputDir must have accepted dir beforehand.
+func removePreviousOutput(dir string) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("reading output directory %q: %w", dir, err)
+	}
+	for _, e := range entries {
+		if !e.IsDir() || !yearDirRe.MatchString(e.Name()) {
+			continue
+		}
+		yearDir := filepath.Join(dir, e.Name())
+		files, err := os.ReadDir(yearDir)
+		if err != nil {
+			return fmt.Errorf("reading %q: %w", yearDir, err)
+		}
+		for _, f := range files {
+			if f.IsDir() || !monthFileRe.MatchString(f.Name()) {
+				continue
+			}
+			if err := os.Remove(filepath.Join(yearDir, f.Name())); err != nil {
+				return fmt.Errorf("removing stale %q: %w", f.Name(), err)
+			}
+		}
+		os.Remove(yearDir) // only succeeds if now empty
+	}
+	return nil
 }
 
 // sortedPosts returns a new slice of posts sorted ascending by CreatedAt,

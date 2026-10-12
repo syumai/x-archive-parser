@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -329,4 +330,55 @@ func splitNonEmptyLines(s string) []string {
 		}
 	}
 	return lines
+}
+
+func TestWrite_RerunRemovesStaleMonthsAndKeepsOtherFiles(t *testing.T) {
+	dir := t.TempDir()
+	meta := output.Meta{Username: "example", TZLabel: "Asia/Tokyo"}
+
+	if _, err := output.Write(dir, meta, fixturePosts()); err != nil {
+		t.Fatal(err)
+	}
+	keep := filepath.Join(dir, "notes.txt")
+	if err := os.WriteFile(keep, []byte("mine"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Second run with a single post in a different month.
+	one := []*post.Post{{
+		ID: "9", URL: "https://twitter.com/example/status/9",
+		CreatedAt: time.Date(2027, 1, 5, 9, 0, 0, 0, jst), Type: post.TypePost, Text: "x",
+	}}
+	if _, err := output.Write(dir, meta, one); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "2026")); !os.IsNotExist(err) {
+		t.Errorf("stale year directory still exists (err=%v)", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "2027", "2027-01.jsonl")); err != nil {
+		t.Errorf("new month missing: %v", err)
+	}
+	if _, err := os.Stat(keep); err != nil {
+		t.Errorf("unrelated file was removed: %v", err)
+	}
+}
+
+func TestWrite_JSONLDoesNotEscapeHTML(t *testing.T) {
+	dir := t.TempDir()
+	p := &post.Post{
+		ID: "1", URL: "https://twitter.com/example/status/1",
+		CreatedAt: time.Date(2026, 3, 1, 10, 0, 0, 0, jst), Type: post.TypePost,
+		Text: "a & b <c> https://example.com/?x=1&y=2",
+	}
+	if _, err := output.Write(dir, output.Meta{Username: "example"}, []*post.Post{p}); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(filepath.Join(dir, "2026", "2026-03.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), "a & b <c> https://example.com/?x=1&y=2") {
+		t.Errorf("text was escaped: %s", b)
+	}
 }

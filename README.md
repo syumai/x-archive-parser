@@ -159,6 +159,8 @@ grep -il wasm x-posts/*/[0-9]*.jsonl
   selected timezone — the system's local timezone by default, or the zone
   passed via `-tz`. The timezone actually used is recorded in `index.md` so
   an agent doesn't need to guess.
+- **HTML entities**: `&amp;`, `&lt;` and `&gt;` in the archive text are
+  converted back to `&`, `<` and `>`.
 - **Offline**: this tool never makes network requests; it only reads the
   archive on disk.
 

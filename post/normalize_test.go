@@ -343,3 +343,20 @@ func TestApplyNoteTweets_InvalidCreatedAtSkipped(t *testing.T) {
 		t.Errorf("Text was modified despite an unparseable note created_at: %q", p.Text)
 	}
 }
+
+func TestFromTweet_HTMLUnescape(t *testing.T) {
+	tw := &archive.Tweet{
+		IDStr:     "1",
+		CreatedAt: "Fri Jul 03 15:56:55 +0000 2026",
+		FullText:  "Tom &amp; Jerry &lt;3 &gt; &amp;lt; https://t.co/a",
+		Entities:  archive.Entities{URLs: []archive.URLEntity{{URL: "https://t.co/a", ExpandedURL: "https://e.com/?a=1&b=2"}}},
+	}
+	p, err := FromTweet(tw, "u", time.UTC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "Tom & Jerry <3 > &lt; https://e.com/?a=1&b=2"
+	if p.Text != want {
+		t.Errorf("Text = %q, want %q", p.Text, want)
+	}
+}

@@ -19,16 +19,13 @@ func writeMonthJSONL(path string, posts []*post.Post) error {
 	defer f.Close()
 
 	w := bufio.NewWriter(f)
+	// Encoder.Encode appends the newline. HTML escaping is disabled so that
+	// "&", "<" and ">" stay literal and remain greppable.
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	for _, p := range posts {
-		b, err := json.Marshal(p)
-		if err != nil {
-			return fmt.Errorf("marshaling post %s: %w", p.ID, err)
-		}
-		if _, err := w.Write(b); err != nil {
-			return fmt.Errorf("writing %q: %w", path, err)
-		}
-		if err := w.WriteByte('\n'); err != nil {
-			return fmt.Errorf("writing %q: %w", path, err)
+		if err := enc.Encode(p); err != nil {
+			return fmt.Errorf("writing post %s to %q: %w", p.ID, path, err)
 		}
 	}
 	if err := w.Flush(); err != nil {

@@ -19,9 +19,13 @@ const createdAtLayout = "Mon Jan 2 15:04:05 -0700 2006"
 // "… https://example.com/x").
 var truncatedSuffixRe = regexp.MustCompile(`…( https?://\S+)?$`)
 
+// htmlUnescaper reverses the HTML escaping X applies to full_text, which
+// only covers these three characters.
+var htmlUnescaper = strings.NewReplacer("&amp;", "&", "&lt;", "<", "&gt;", ">")
+
 // FromTweet normalizes a raw archive tweet into a Post.
 //
-// It expands t.co URLs found in entities.urls, classifies the post as a
+// It unescapes HTML entities, expands t.co URLs found in entities.urls, classifies the post as a
 // repost, reply, or plain post (in that priority order), and converts
 // CreatedAt to loc.
 func FromTweet(t *archive.Tweet, username string, loc *time.Location) (*Post, error) {
@@ -30,7 +34,7 @@ func FromTweet(t *archive.Tweet, username string, loc *time.Location) (*Post, er
 		return nil, fmt.Errorf("post: parsing created_at for tweet %s: %w", t.IDStr, err)
 	}
 
-	text := expandURLs(t.FullText, t.Entities.URLs)
+	text := expandURLs(htmlUnescaper.Replace(t.FullText), t.Entities.URLs)
 
 	p := &Post{
 		ID:            t.IDStr,
